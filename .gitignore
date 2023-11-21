@@ -1,0 +1,11 @@
+# Python environment files
+venv/
+*.pyc
+__pycache__/
+.env
+dreams-of-cloth-env/
+
+# Exclude database-related files or directories
+db.sqlite3
+/migrations
+.DS_Store
