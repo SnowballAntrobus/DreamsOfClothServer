@@ -9,5 +9,8 @@ class PrintMessageView(APIView):
     """
     def get(self, request, format=None):
         print("Server was pinged by client")
-        return Response("Message printed", status=status.HTTP_200_OK)
+        response_data = {
+            "message": "Message printed"
+        }
+        return Response(response_data, status=status.HTTP_200_OK)
 
