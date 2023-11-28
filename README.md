@@ -15,3 +15,5 @@ docker run --rm -it -p 8000:8000 dreams-of-cloth
 ```
 - add local address from `ifconfig` to settings.py
 - run commands in entrypoint.sh
+## Connecting
+`cloth.gay:8000`
