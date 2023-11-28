@@ -9,3 +9,6 @@ dreams-of-cloth-env/
 db.sqlite3
 /migrations
 .DS_Store
+
+# Environment files for sensitive data
+dreams_of_cloth_server.env

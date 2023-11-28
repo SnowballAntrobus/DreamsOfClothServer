@@ -6,7 +6,7 @@ docker build -t dreams-of-cloth .
 docker run --rm -it -p 8000:8000 dreams-of-cloth
 ```
 ### Local
-- get environment setup
+- get python environment setup
 ```
     sudo apt install python3.9
     python3.9 -m venv dreams-of-cloth-env
