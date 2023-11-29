@@ -1,3 +1,5 @@
+import base64
+
 from django.shortcuts import render
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -13,7 +15,7 @@ class PrintMessageView(APIView):
         response_data = {
             "message": "Message printed"
         }
-        return Response(response_data, status=status.HTTP_200_OK)
+        return Response(response_data, status=status.HTTP_200_OK, content_type='application/json')
     
 class TemporaryImageView(APIView):
     """
@@ -24,9 +26,13 @@ class TemporaryImageView(APIView):
         if serializer.is_valid():
             image_name = serializer.validated_data['image'].name
             print(f"Received image: {image_name}")
+            uploaded_image = serializer.validated_data['image']
+            # Could use FileResponse (no json) instead to return smaller file and not have to encode
+            encoded_image = base64.b64encode(uploaded_image.read()).decode('utf-8')
             response_data = {
-                "message": "Image received"
+                "message": "Image received",
+                "image_data": encoded_image,
             }
-            return Response(response_data, status=status.HTTP_200_OK)
+            return Response(response_data, status=status.HTTP_200_OK, content_type='application/json')
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
