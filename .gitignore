@@ -1,14 +1,17 @@
-# Python environment files
-venv/
+# Python files
 *.pyc
 __pycache__/
-.env
-dreams-of-cloth-env/
 
 # Exclude database-related files or directories
 db.sqlite3
-/migrations
+migrations/
 .DS_Store
 
 # Environment files for sensitive data
 dreams_of_cloth_server.env
+
+# Model data (get in init script)
+*.pth
+
+# SAM files (get in init script)
+segment_anything/

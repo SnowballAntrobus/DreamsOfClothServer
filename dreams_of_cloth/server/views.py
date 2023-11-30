@@ -1,4 +1,7 @@
 import base64
+import io
+
+from image_upload_processing.image_upload import UploadedImage
 
 from django.shortcuts import render
 from rest_framework.views import APIView
@@ -27,11 +30,16 @@ class TemporaryImageView(APIView):
             image_name = serializer.validated_data['image'].name
             print(f"Received image: {image_name}")
             uploaded_image = serializer.validated_data['image']
+            uploaded_image_byte_stream = io.BytesIO(uploaded_image.read())
+            uploaded_image = UploadedImage(uploaded_image_byte_stream)
+            uploaded_image.createImageEmbedding()
+            uploaded_image.predictMasks()
+            mask_byte_stream = uploaded_image.getMaskByteStream()
             # Could use FileResponse (no json) instead to return smaller file and not have to encode
-            encoded_image = base64.b64encode(uploaded_image.read()).decode('utf-8')
+            encoded_mask = base64.b64encode(mask_byte_stream.read()).decode('utf-8')
             response_data = {
-                "message": "Image received",
-                "image_data": encoded_image,
+                "message": "Image mask",
+                "image_data": encoded_mask,
             }
             return Response(response_data, status=status.HTTP_200_OK, content_type='application/json')
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
