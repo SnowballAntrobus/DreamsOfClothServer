@@ -9,7 +9,7 @@ class UploadedImage:
     model_type = "vit_h"
     device = "cuda"
 
-    input_point = np.array([[600, 500]])
+    input_point = np.array([[700, 1000]])
     input_label = np.array([1])
     imageData: BytesIO
     predictor: SamPredictor = None
@@ -50,10 +50,10 @@ class UploadedImage:
         for i, binary_mask in enumerate(self.masks):
             image = np.zeros_like(binary_mask, dtype=np.uint8)
             image[binary_mask != 0] = 255
-            cv2.imwrite(f'{i}.png', image)
+            #cv2.imwrite(f'{i}.png', image)
             retval, buffer = cv2.imencode('.png', image)
             byte_stream = BytesIO(buffer)
-            #return byte_stream
+            return byte_stream
 
     
 
