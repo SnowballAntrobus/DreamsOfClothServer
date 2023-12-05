@@ -42,7 +42,6 @@ class UploadedImage:
         predictor.set_image(self.readImage())
         self.predictor = predictor
 
-    # func that gets mask with points
     def predictMasks(self):
         points = np.concatenate((self.positive_points, self.negative_points), axis=0)
         pos_lables = np.ones(self.positive_points.shape[0])
