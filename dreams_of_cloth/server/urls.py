@@ -4,7 +4,5 @@ from server import views
 
 urlpatterns = [
     path('print-message/', views.PrintMessageView.as_view(), name='print-message'),
-    path('image-upload/', views.TemporaryImageView.as_view(), name='image-upload/'),
+    path('image-upload/', views.GetObjectMaskView.as_view(), name='image-upload/'),
 ]
-
-urlpatterns = format_suffix_patterns(urlpatterns)
