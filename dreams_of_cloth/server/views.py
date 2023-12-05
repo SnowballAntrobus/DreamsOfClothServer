@@ -9,8 +9,7 @@ from django.shortcuts import render
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
-from server.serializers import UploadedImageSerializer, PointsSerializer, TestComplexSerializer
-from rest_framework.parsers import MultiPartParser
+from server.serializers import PointsSerializer, FilesForMaskSerializer
 
 class PrintMessageView(APIView):
     """
@@ -24,45 +23,8 @@ class PrintMessageView(APIView):
         return Response(response_data, status=status.HTTP_200_OK, content_type='application/json')
     
 class GetObjectMaskView(APIView):
-    """
-    Receive an image, positive points and negative points from client and return mask of object
-    """
-    def post(self, request, format=None):
-        serializer = UploadedImageSerializer(data=request.data)
-        print(request.data)
-        if serializer.is_valid():
-            # Getting image data
-            image_name = serializer.validated_data['image'].name
-            uploaded_image = serializer.validated_data['image']
-            uploaded_image_byte_stream = io.BytesIO(uploaded_image.read())
-            print(f"Got image: {image_name}")
-            uploaded_image = UploadedImage(uploaded_image_byte_stream)
-            uploaded_image.createImageEmbedding()
-            uploaded_image.predictMasks()
-            mask_byte_stream = uploaded_image.getMaskByteStream()
-            # Could use FileResponse (no json) instead to return smaller file and not have to encode
-            encoded_mask = base64.b64encode(mask_byte_stream.read()).decode('utf-8')
-            response_data = {
-                "message": "Image mask",
-                "image_data": encoded_mask,
-            }
-            return Response(response_data, status=status.HTTP_200_OK, content_type='application/json')
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-    
-class TestNestedJSONView(APIView):
     def post(self, request):
-        print(request.data)
-        serializer = PointsSerializer(data=request.data)
-        if serializer.is_valid():
-            response_data = {
-                "message": "test"
-            }
-            return Response(response_data, status=status.HTTP_200_OK, content_type='application/json')
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-    
-class TestComplexView(APIView):
-    def post(self, request):
-        files_serializer = TestComplexSerializer(data=request.data)
+        files_serializer = FilesForMaskSerializer(data=request.data)
         if files_serializer.is_valid():
             image = files_serializer.validated_data['image']
             print(f"Got image: {image.name}")
@@ -73,11 +35,30 @@ class TestComplexView(APIView):
                 parsed_json = json.loads(json_data)
                 json_serializer = PointsSerializer(data=parsed_json)
                 if json_serializer.is_valid():
-                    positive_points = json_serializer['pos_points']
-                    # positive_points = np.array([[point['x'], point['y']] for point in positive_points])
-                    print(f"Pos points: {positive_points}")
-                    negative_points = json_serializer['neg_points']
-                    print(f"Neg points: {negative_points}")
+                    positive_points = json_serializer.validated_data['pos_points']
+                    positive_points_array = np.array([[point['x'], point['y']] for point in positive_points])
+                    print(f"Pos points: {positive_points_array}")
+                    negative_points = json_serializer.validated_data['neg_points']
+                    negative_points_array = np.array([[point['x'], point['y']] for point in negative_points])
+                    print(f"Neg points: {negative_points_array}")
+
+                    try:
+                        image_byte_stream = io.BytesIO(image.read())
+                        uploaded_image = UploadedImage(image_byte_stream, positive_points_array, negative_points_array)
+                        uploaded_image.createImageEmbedding()
+                        uploaded_image.predictMasks()
+                        mask_byte_stream = uploaded_image.getMaskByteStream()
+                    except Exception as e:
+                        print("Error in image processing: ", str(e))
+                    
+                    # Could use FileResponse (no json) instead to return smaller file and not have to encode
+                    encoded_mask = base64.b64encode(mask_byte_stream.read()).decode('utf-8')
+                    response_data = {
+                        "message": "Image mask",
+                        "image_data": encoded_mask,
+                    }
+                    return Response(response_data, status=status.HTTP_200_OK, content_type='application/json')
+
                 else:
                     Response(json_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
             except:

@@ -9,14 +9,22 @@ class UploadedImage:
     model_type = "vit_h"
     device = "cuda"
 
-    input_point = np.array([[700, 1000]])
-    input_label = np.array([1])
+    positive_points: np.ndarray
+    negative_points: np.ndarray
     imageData: BytesIO
     predictor: SamPredictor = None
     masks: any
 
-    def __init__(self, imageData: BytesIO):
+    def __init__(self, imageData, positive_points: np.ndarray, negative_points: np.ndarray):
         self.imageData = imageData
+        if positive_points.size == 0:
+            self.positive_points = np.array([], dtype=int).reshape((0, 2))
+        else:
+            self.positive_points = positive_points
+        if negative_points.size == 0:
+            self.negative_points = np.array([], dtype=int).reshape((0, 2))
+        else:
+            self.negative_points = negative_points
 
     #TODO func that checks size of image
 
@@ -36,10 +44,15 @@ class UploadedImage:
 
     # func that gets mask with points
     def predictMasks(self):
+        points = np.concatenate((self.positive_points, self.negative_points), axis=0)
+        pos_lables = np.ones(self.positive_points.shape[0])
+        neg_lables = np.zeros(self.negative_points.shape[0])
+        lables = np.concatenate((pos_lables, neg_lables))
+        print(f"Lables: {lables}")
         if self.predictor != None:
             masks, scores, logits = self.predictor.predict(
-                point_coords=self.input_point,
-                point_labels=self.input_label,
+                point_coords=points,
+                point_labels=lables,
                 multimask_output=True,
             )
             self.masks = masks

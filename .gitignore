@@ -14,4 +14,4 @@ dreams_of_cloth_server.env
 *.pth
 
 # SAM files (get in init script)
-segment_anything/
+segment-anything/
