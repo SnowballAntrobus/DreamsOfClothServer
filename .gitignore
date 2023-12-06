@@ -11,6 +11,7 @@ migrations/
 dreams_of_cloth_server.env
 
 # Model data (get in init script)
+models/
 *.pth
 
 # SAM files (get in init script)

@@ -4,7 +4,7 @@ from io import BytesIO
 import numpy as np
 
 class UploadedImage:
-    #TODO: change to not be hardcoded based on env created in init script instead
+    #TODO: maybe change to not be hardcoded path
     sam_checkpoint = "models/sam_vit_h_4b8939.pth"
     model_type = "vit_h"
     device = "cuda"
@@ -42,7 +42,6 @@ class UploadedImage:
         predictor.set_image(self.readImage())
         self.predictor = predictor
 
-    # func that gets mask with points
     def predictMasks(self):
         points = np.concatenate((self.positive_points, self.negative_points), axis=0)
         pos_lables = np.ones(self.positive_points.shape[0])

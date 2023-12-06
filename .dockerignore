@@ -1,3 +1,9 @@
 # Exclude database-related files or directories
-db.sqlite3
-/migrations
+dreams_of_cloth/db.sqlite3
+dreams_of_cloth/server/migrations
+
+#Exclude existing model data
+dreams_of_cloth/models
+
+# Exclude SAM if already installed
+dreams_of_cloth/image_upload_processing/segment-anything
