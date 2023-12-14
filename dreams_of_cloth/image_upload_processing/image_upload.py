@@ -26,12 +26,21 @@ class UploadedImage:
         else:
             self.negative_points = negative_points
 
-    #TODO func that checks size of image
+    def isImageTooLarge(self, image):
+        height, width = image.shape[:2]
+        print(f"Width: {width}, Height: {height}")
+        #TODO: Change this so it is not the exact size my phone happens to return a thumbnail as
+        if not width == 640 or not height == 852:
+            raise ValueError("The image is not the exact size expected")
+
 
     def readImage(self):
         nparr = np.frombuffer(self.imageData.read(), np.uint8)
         image = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
         image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+        #TODO: Remove this write when we are confident in the process
+        cv2.imwrite('from_mobile.png', image)
+        self.isImageTooLarge(image)
         return image
 
     def createImageEmbedding(self):
