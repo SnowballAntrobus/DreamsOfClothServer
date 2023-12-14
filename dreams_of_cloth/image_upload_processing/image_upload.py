@@ -29,7 +29,7 @@ class UploadedImage:
     def isImageTooLarge(self, image):
         height, width = image.shape[:2]
         print(f"Width: {width}, Height: {height}")
-        #TODO: Change this so it is not the exact size my phone happens to return a thumbnail as
+        #TODO: Change this so it is not the exact size my phone happens to return a thumbnail as instead find smallest size that produces good results
         if not width == 640 or not height == 852:
             raise ValueError("The image is not the exact size expected")
 
