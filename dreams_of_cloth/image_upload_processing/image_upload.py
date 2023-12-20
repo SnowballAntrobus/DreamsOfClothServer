@@ -63,18 +63,17 @@ class UploadedImage:
                 point_labels=lables,
                 multimask_output=True,
             )
-            self.masks = masks
+            self.masks = zip(masks, scores)
         else:
             print("Error: Predictor was not set")
 
     def getMaskByteStream(self):
-        for i, binary_mask in enumerate(self.masks):
-            image = np.zeros_like(binary_mask, dtype=np.uint8)
-            image[binary_mask != 0] = 255
-            #cv2.imwrite(f'{i}.png', image)
-            retval, buffer = cv2.imencode('.png', image)
-            byte_stream = BytesIO(buffer)
-            return byte_stream
+        binary_mask = max(self.masks, key=lambda x: x[1])[0]
+        image = np.zeros_like(binary_mask, dtype=np.uint8)
+        image[binary_mask != 0] = 255
+        retval, buffer = cv2.imencode('.png', image)
+        byte_stream = BytesIO(buffer)
+        return byte_stream
 
     
 
