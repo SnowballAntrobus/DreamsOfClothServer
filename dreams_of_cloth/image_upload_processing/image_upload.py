@@ -9,22 +9,35 @@ class UploadedImage:
     model_type = "vit_h"
     device = "cuda"
 
+    points_data_present: bool
+    box_data_present: bool
     positive_points: np.ndarray
     negative_points: np.ndarray
+    input_box: np.ndarray
     imageData: BytesIO
     predictor: SamPredictor = None
     masks: any
 
-    def __init__(self, imageData, positive_points: np.ndarray, negative_points: np.ndarray):
+    def __init__(self, imageData, points_data_present: bool, box_data_present: bool, positive_points: np.ndarray, negative_points: np.ndarray, input_box: np.ndarray):
+        if not points_data_present and not box_data_present:
+            raise ValueError("Input box and points can't both be null")
+        self.box_data_present = box_data_present
+        self.points_data_present = points_data_present
+        
         self.imageData = imageData
-        if positive_points.size == 0:
+
+        if points_data_present and positive_points.size == 0:
             self.positive_points = np.array([], dtype=int).reshape((0, 2))
-        else:
+        elif points_data_present:
             self.positive_points = positive_points
-        if negative_points.size == 0:
+
+        if points_data_present and negative_points.size == 0:
             self.negative_points = np.array([], dtype=int).reshape((0, 2))
-        else:
+        elif points_data_present:
             self.negative_points = negative_points
+
+        if box_data_present:
+            self.input_box = input_box
 
     def isImageTooLarge(self, image):
         height, width = image.shape[:2]
@@ -52,20 +65,35 @@ class UploadedImage:
         self.predictor = predictor
 
     def predictMasks(self):
-        points = np.concatenate((self.positive_points, self.negative_points), axis=0)
-        pos_lables = np.ones(self.positive_points.shape[0])
-        neg_lables = np.zeros(self.negative_points.shape[0])
-        lables = np.concatenate((pos_lables, neg_lables))
-        print(f"Lables: {lables}")
-        if self.predictor != None:
+        if self.predictor == None:
+            print("Error: Predictor was not set")
+            return
+        
+        if self.points_data_present:
+            points = np.concatenate((self.positive_points, self.negative_points), axis=0)
+            pos_lables = np.ones(self.positive_points.shape[0])
+            neg_lables = np.zeros(self.negative_points.shape[0])
+            lables = np.concatenate((pos_lables, neg_lables))
+        else:
+            points = None
+            lables = None
+
+        if self.box_data_present:
             masks, scores, logits = self.predictor.predict(
                 point_coords=points,
                 point_labels=lables,
+                box=self.input_box[None, :],
                 multimask_output=True,
             )
             self.masks = zip(masks, scores)
-        else:
-            print("Error: Predictor was not set")
+            return
+        
+        masks, scores, logits = self.predictor.predict(
+            point_coords=points,
+            point_labels=lables,
+            multimask_output=True,
+        )
+        self.masks = zip(masks, scores)
 
     def getMaskByteStream(self):
         binary_mask = max(self.masks, key=lambda x: x[1])[0]

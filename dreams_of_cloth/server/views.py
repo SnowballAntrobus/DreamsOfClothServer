@@ -9,7 +9,7 @@ from django.shortcuts import render
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
-from server.serializers import PointsSerializer, FilesForMaskSerializer
+from server.serializers import FilesForMaskSerializer, MaskPredictInputsSerializer
 
 class PrintMessageView(APIView):
     """
@@ -40,20 +40,38 @@ class GetObjectMaskView(APIView):
             response_data = {"message": "Invalid json file"}
             return Response(response_data, status=status.HTTP_400_BAD_REQUEST)
         
-        json_serializer = PointsSerializer(data=parsed_json)
+        json_serializer = MaskPredictInputsSerializer(data=parsed_json)
         if not json_serializer.is_valid():
             return Response(json_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        
+        if 'points' in json_serializer.validated_data:
+            points_data = json_serializer.validated_data['points']
+            positive_points = points_data['pos_points']
+            positive_points_array = np.array([[point['x'], point['y']] for point in positive_points])
+            print(f"Pos points: {positive_points_array}")
+            negative_points = points_data['neg_points']
+            negative_points_array = np.array([[point['x'], point['y']] for point in negative_points])
+            print(f"Neg points: {negative_points_array}")
+            points_data_present = True
+        else:
+            positive_points_array = None
+            negative_points_array = None
+            points_data_present = False
+            print("Points: No data received")
 
-        positive_points = json_serializer.validated_data['pos_points']
-        positive_points_array = np.array([[point['x'], point['y']] for point in positive_points])
-        print(f"Pos points: {positive_points_array}")
-        negative_points = json_serializer.validated_data['neg_points']
-        negative_points_array = np.array([[point['x'], point['y']] for point in negative_points])
-        print(f"Neg points: {negative_points_array}")
+        if 'box' in json_serializer.validated_data:
+            box_data = json_serializer.validated_data['box']
+            input_box_array = np.array([box_data['point1']['x'], box_data['point1']['y'], box_data['point2']['x'], box_data['point2']['y']])
+            print(f"Box: ({input_box_array[0]}, {input_box_array[1]}) ({input_box_array[2]}, {input_box_array[3]})")
+            box_data_present = True
+        else:
+            input_box_array = None
+            box_data_present = False
+            print("Box: No data received")
 
         try:
             image_byte_stream = io.BytesIO(image.read())
-            uploaded_image = UploadedImage(image_byte_stream, positive_points_array, negative_points_array)
+            uploaded_image = UploadedImage(image_byte_stream, points_data_present, box_data_present, positive_points_array, negative_points_array, input_box_array)
             uploaded_image.createImageEmbedding()
             uploaded_image.predictMasks()
             mask_byte_stream = uploaded_image.getMaskByteStream()
